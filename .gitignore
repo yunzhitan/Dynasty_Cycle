@@ -1,0 +1,9 @@
+/.vs
+/Debug
+/game_Data
+/Library
+*.exe
+*.sln
+*.csproj
+*.pdb
+/Temp

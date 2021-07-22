@@ -1,0 +1,6 @@
+1558.1.16 = {
+	discovered_by = SPA		# 羖varo de Menda馻 de Neira
+}
+1764.1.1 = {
+	discovered_by = GBR		# John Byron, unknown date
+}
