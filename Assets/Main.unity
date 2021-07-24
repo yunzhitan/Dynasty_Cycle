@@ -143,7 +143,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   kProvinceMap: {fileID: 2800000, guid: 2cf5754fc4fdfdd4a9716f7bb5529b18, type: 3}
   kProvinceColorMap: {fileID: 8400000, guid: e8aacdbcbb7051949a72cff49ba8082d, type: 2}
-  kProvinceCount: 0
+  kProvinceCount: 3677
   kLut: {fileID: 2100000, guid: ee9d596507738684f943bb0056179b71, type: 2}
 --- !u!4 &290810788
 Transform:

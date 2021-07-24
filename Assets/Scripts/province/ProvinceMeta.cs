@@ -6,14 +6,14 @@ using UnityEngine;
 public class ProvinceMeta{
 
     [JsonProperty("id")]
-    public int id { get; set; }
+    public int Id { get; set; }
     [JsonProperty("color")]
     public Color kMapColor { get; set; }
     public Color kShowColor;
 
     public ProvinceMeta(int id, Color mapColor)
     {
-        id = id;
+        Id = id;
         kMapColor = mapColor;
         kShowColor = mapColor;
         kShowColor.a = 0;

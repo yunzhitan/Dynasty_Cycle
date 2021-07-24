@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using province;
+using Color = UnityEngine.Color;
+using Debug = UnityEngine.Debug;
 
 [ExecuteInEditMode]
 public class ProvinceGrid : MonoBehaviour {
@@ -15,6 +22,8 @@ public class ProvinceGrid : MonoBehaviour {
 
     private Dictionary<Color, int> kProvinceColorToIDMap = new Dictionary<Color, int>();
     private Dictionary<int, Color> kProvinceIdtoColorMap = new Dictionary<int, Color>();
+    private Dictionary<BorderPair,HashSet<Point>> borderPointMap = new Dictionary<BorderPair,HashSet<Point>>();
+    private Dictionary<int, List<Border>> borderMap = new Dictionary<int, List<Border>>();
 
     private ProvinceMeta[] kProvinceMeta;
 
@@ -33,11 +42,63 @@ public class ProvinceGrid : MonoBehaviour {
     void Awake()
     {
         search();
+        InitBorder();
     }
 
+    private void InitBorder()
+    {
+        StreamReader reader = new StreamReader(Application.streamingAssetsPath
+                                               + "/province/border.txt");
+        while (reader.Peek() >= 0)
+        {
+            var s = reader.ReadLine().Split(new []{':'},StringSplitOptions.RemoveEmptyEntries);
+            if(s.Length == 0) continue;
+            var id_pair = s[0].Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
+            if (id_pair.Length == 0) continue;
+            var pa = Convert.ToInt32(id_pair[0]);
+            var pb = Convert.ToInt32(id_pair[1]);
+            BorderPair pair = new BorderPair(pa, pb);
+            Border border = new Border(pair,new List<Point>());
+            var point_str_list = s[1].Split(new char[]{' '},StringSplitOptions.RemoveEmptyEntries);
+            foreach (var point_str in point_str_list)
+            {
+                var point_str_temp = point_str.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+                if(point_str_temp.Length == 0) continue;
+                var x = Convert.ToInt32(point_str_temp[0]);
+                var z = Convert.ToInt32(point_str_temp[1]);
+                var point = new Point(x, z);
+                border.pointList.Add(point);
+            }
+
+            if (borderMap.ContainsKey(pa))
+            {
+                borderMap[pa].Add(border);
+            }
+            else
+            {
+                var borderList = new List<Border>();
+                borderList.Add(border);
+                borderMap.Add(pa,borderList);
+            }
+            if (borderMap.ContainsKey(pb))
+            {
+                borderMap[pb].Add(border);
+            }
+            else
+            {
+                var borderList = new List<Border>();
+                borderList.Add(border);
+                borderMap.Add(pb,borderList);
+            }
+        }
+    }
+    
     private void search()
     {
-        searDefine();
+        
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        SearchColor();
 
         if(kProvinceMap ==null)
         {
@@ -49,21 +110,9 @@ public class ProvinceGrid : MonoBehaviour {
 
         FileStream fileStream = new FileStream(Application.streamingAssetsPath + "/province/provinceId.txt",FileMode.Open);
         StreamReader reader = new StreamReader(fileStream);
-        FileStream output = new FileStream(Application.streamingAssetsPath + "/province/border.txt",FileMode.Open);
-        
-       
-        
+
         kProvinceMeta = new ProvinceMeta[ConfigParam.MAXProvinceCount];
 
-        /*
-        int flag = 0;
-        foreach(var colcount in result)
-        {
-            var col = colcount.Key;
-            kProvinceColorToIDMap.TryGetValue(col, out flag);
-            kProvinceMeta[flag] = new ProvinceMeta(flag, col);
-        }
-        */
         string s;
         int flag = 0;
         int count = 0;
@@ -79,98 +128,52 @@ public class ProvinceGrid : MonoBehaviour {
             kProvinceMeta[id] = new ProvinceMeta(id,col);
         }
         
-        LC_Helper.Loop(width, (i) =>
-        {
-            LC_Helper.Loop(height, (j) =>
-            {
-                var rgb = kProvinceMap.GetPixel(i, j);
-                var rgb_left = rgb;
-                var rgb_right = rgb;
-                var rgb_high = rgb;
-                var rgb_low = rgb;
-                if (j > 0)
-                    rgb_low = kProvinceMap.GetPixel(i, j - 1);
-                if (j < width - 1)
-                    rgb_high = kProvinceMap.GetPixel(i,j + 1);
-                if (i > 0)
-                    rgb_left = kProvinceMap.GetPixel(i - 1, j);
-                if (i < width - 1)
-                    rgb_low = kProvinceMap.GetPixel(i + 1, j);
-
-                if (rgb_left != rgb || rgb_right != rgb || rgb_high != rgb || rgb_low != rgb)
-                {
-                  
-                }
-            });
-
-        });
-
+        var ttt = kProvinceMap.GetPixel(0, 0);
+        Debug.Log("getPixel： " + ttt);
+        
+        fileStream.Close();
         kProvincePolitimap = new Texture2D(ConfigParam.BLOCKMAXWIDTH, ConfigParam.BLOCKMAXHEIGHT);
         Graphics.ConvertTexture(kProvinceMap, kProvincePolitimap);
         kProvinceCount = count;
         //DebugProvinceCol();
         ChangeProvinceColor();
+        stopwatch.Stop();
+        
+        Debug.Log("search函数的执行时间为：" + stopwatch.ElapsedMilliseconds);
     }
 
-    private void searDefine()
+    private void SearchColor()
     {
-        var path = Application.streamingAssetsPath;
-        var searpath = Path.Combine(path, "Map/definition.csv");
-
-        kProvinceColorToIDMap.Clear();
-        if (File.Exists(searpath))
+        var path = Application.streamingAssetsPath + "/province/province_color.txt";
+        var sr = new StreamReader(path);
+        String[] sss = new string[4];
+        try
         {
-            var data = OpenCSV(searpath);
-
-            var provincetoken = data.FindToken("province");
-            var redtoken = data.FindToken("red");
-            var greentoken = data.FindToken("green");
-            var bluetoken = data.FindToken("blue");
-            
-            var sr = new StreamWriter(Application.streamingAssetsPath + "/province/province_color.txt");;
-
-            int tempint = 0;
-            LC_Helper.Loop(data.data.Count, (i) =>
+            while (sr.Peek() >= 0)
             {
-                var pid = data.FindDataAtIndexWithToken(i, provincetoken);
-                var red = data.FindDataAtIndexWithToken(i, redtoken);
-                var green = data.FindDataAtIndexWithToken(i, greentoken);
-                var blue = data.FindDataAtIndexWithToken(i, bluetoken);
+                sss = sr.ReadLine().Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+                if (sss.Length == 0) continue;
+                var id = Convert.ToInt32(sss[0]);
+                var r = (float) Convert.ToByte(sss[1]) / 255f;
+                var g = (float) Convert.ToByte(sss[2]) / 255f;
+                var b = (float) Convert.ToByte(sss[3]) / 255f;
 
-                int temp_red,temp_green,temp_blue;
-                int.TryParse(red, out temp_red);
-                var tempr = (float)temp_red / 255f;
-                int.TryParse(green, out temp_green);
-                var tempg = (float)temp_green / 255f;
-                int.TryParse(blue, out temp_blue);
-                var tempb = (float)temp_blue / 255f;
+                Color color = new Color(r, g, b, 1);
 
-                int.TryParse(pid, out tempint);
-
-                Color nColor = new Color(tempr, tempg, tempb, 1);
-
-                var id = -1;
-                if(kProvinceColorToIDMap.TryGetValue( nColor, out id))
+                if (!kProvinceIdtoColorMap.ContainsKey(id))
                 {
-                    Debug.Log("has id " + id);
-                }else
-                {
-                    var str = String.Format("{0} {1} {2} {3}\n", tempint, temp_red, temp_green, temp_blue);
-                    kProvinceColorToIDMap.Add(nColor, tempint);
-                    kProvinceIdtoColorMap.Add(tempint,nColor);
-                    Debug.Log(tempint + " " + nColor);
-                    sr.WriteLine(str);
-                    sr.Flush();
+                    kProvinceIdtoColorMap.Add(id, color);
+                    kProvinceColorToIDMap.Add(color, id);
                 }
-
-
-            });
-            Debug.Log("执行完毕");
-            sr.Close();
-
+            }
         }
-    }
+        catch (FormatException)
+        {
+            Debug.Log("出问题的是：" + sss);
+        }
 
+        sr.Close();
+    }
     public int GetProvinceID( int x, int z)
     {
         x = x % kProvinceMap.width;
@@ -255,7 +258,7 @@ public class ProvinceGrid : MonoBehaviour {
         {
             var data = kProvinceMeta[i];
 
-            if(data.id %2 == 0)
+            if(data.Id %2 == 0)
             {
                 data.kShowColor = Color.white;
                 data.kShowColor.a = 1;
@@ -288,13 +291,53 @@ public class ProvinceGrid : MonoBehaviour {
 
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
         if (Input.GetMouseButtonUp(0))
         {
             RayTest();
         }
     }
+    
+        public void PickEx(Vector3 pos)
+        { 
+            var id = GetProvinceID((int) pos.x, (int) pos.z);
+            Debug.Log("选择到省份" + id);
+            
+            var Pdata = GetProvinceData(id);
+            if (Pdata != null)
+            {
+                var col = kProvinceMap.GetPixel((int)pos.x, (int)pos.z);
+                var tarcol = Color.white;
+                if (Pdata.kShowColor.a > 0.5)
+                {
+                    tarcol = Color.black;
+                    tarcol.a = 0;
+                }
+                else
+                {
+                    tarcol = Color.red;
+                    tarcol.a = 1;
+                }
+                Pdata.kShowColor = tarcol;
+                ChangeTargetProvinceColor(col, tarcol);
+
+                var border_col = Color.blue;
+                List<Border> borders;
+                borderMap.TryGetValue(id, out borders);
+                foreach (var border in borders)
+                {
+                    foreach (var point in border.pointList)
+                    {
+                        kProvincePolitimap.SetPixel(point.x,point.y,border_col);
+                    }
+                }
+                kProvincePolitimap.Apply();
+                
+                Graphics.Blit(kProvincePolitimap, kProvinceColorMap);
+            }
+    }
+
 
     public void Pickat(Vector3 pos)
     {
@@ -317,134 +360,7 @@ public class ProvinceGrid : MonoBehaviour {
             ChangeProvinceColor();
         }
     }
-
-    public void PickEx(Vector3 pos)
-    {
-        Debug.Log("选择到省份" + GetProvinceID((int)pos.x, (int)pos.z));
-
-        var Pdata = GetProvinceData((int)pos.x, (int)pos.z);
-        if (Pdata != null)
-        {
-            var col = kProvinceMap.GetPixel((int)pos.x, (int)pos.z);
-            var tarcol = Color.white;
-
-            if (Pdata.kShowColor.a > 0.5)
-            {
-                tarcol = Color.black;
-                tarcol.a = 0;
-            }
-            else
-            {
-                tarcol = Color.red;
-                tarcol.a = 1;
-            }
-
-            Pdata.kShowColor = tarcol;
-            ChangeTargetProvinceColor(col, tarcol);
-        }
-    }
-
-
-    public class CSVCache
-    {
-        public string[] head;
-        public List<string[]> data = new List<string[]>();
-
-        public string FindDataAtIndex( int index, string kTar)
-        {
-            int flag = -1;
-            for(int i=0,iMax = head[i].Length; i < iMax; ++i)
-            {
-                if( head[i] == kTar)
-                {
-                    flag = i;
-                    break;
-                }
-            }
-
-            if( index >=0 && index < data.Count)
-            {
-                var pars = data[index];
-                if(flag >=0 && flag < pars.Length)
-                {
-                    return pars[flag];
-                }
-            }
-            return null;
-        }
-
-        public int FindToken(string kTar)
-        {
-            int flag = -1;
-            for (int i = 0, iMax = head[i].Length; i < iMax; ++i)
-            {
-                if (head[i] == kTar)
-                {
-                    flag = i;
-                    break;
-                }
-            }
-
-            return flag;
-
-        }
-
-        public string FindDataAtIndexWithToken( int index, int flag)
-        {
-            if (index >= 0 && index < data.Count)
-            {
-                var pars = data[index];
-                if (flag >= 0 && flag < pars.Length)
-                {
-                    return pars[flag];
-                }
-            }
-            return null;
-        }
-    }
-
-    public static CSVCache OpenCSV(string filePath)//从csv读取数据返回table
-    {
-        CSVCache result = new CSVCache();
-
-        System.Text.Encoding encoding = GetType(filePath); //Encoding.ASCII;//
-        System.IO.FileStream fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open,
-            System.IO.FileAccess.Read);
-
-        System.IO.StreamReader sr = new System.IO.StreamReader(fs, encoding);
-
-        //记录每次读取的一行记录
-        string strLine = "";
-        //记录每行记录中的各字段内容
-        string[] aryLine = null;
-        string[] tableHead = null;
-        //标示列数
-        int columnCount = 0;
-        //标示是否是读取的第一行
-        bool IsFirst = true;
-        //逐行读取CSV中的数据
-        while ((strLine = sr.ReadLine()) != null)
-        {
-            if (IsFirst == true)
-            {
-                tableHead = strLine.Split(';');
-                result.head = tableHead;
-                IsFirst = false;
-            }
-            else
-            {
-                aryLine = strLine.Split(';');
-                result.data.Add(aryLine);
-
-            }
-        }
-      
-        sr.Close();
-        fs.Close();
-
-        return result;
-    }
-
+    
     public static System.Text.Encoding GetType(string FILE_NAME)
     {
         System.IO.FileStream fs = new System.IO.FileStream(FILE_NAME, System.IO.FileMode.Open,
@@ -518,4 +434,128 @@ public class ProvinceGrid : MonoBehaviour {
         }
         return true;
     }
+    
+    private void AddBorderPoint(Color ca, Color cb, int i, int j)
+    {
+        int pa = 0, pb = 0;
+        kProvinceColorToIDMap.TryGetValue(ca, out pa);
+        kProvinceColorToIDMap.TryGetValue(cb, out pb);
+        BorderPair pair = new BorderPair(pa, pb);
+
+        if (borderPointMap.ContainsKey(pair))
+        {
+            borderPointMap[pair].Add(new Point(i, j));
+        }
+        else
+        {
+            var pointSet = new HashSet<Point>();
+            pointSet.Add(new Point(i, j));
+            borderPointMap.Add(pair, pointSet);
+        }
+    }
+
+    void SearchBorder()
+    {
+        var width = kProvinceMap.width;
+        var height = kProvinceMap.height;
+        LC_Helper.Loop(width, (i) =>
+        {
+            LC_Helper.Loop(height, (j) =>
+            {
+                var col = kProvinceMap.GetPixel(i, j);
+                
+                if (i > 0 && i < width - 1 && j > 0 && j < height - 1)
+                {
+                    var col_left = kProvinceMap.GetPixel(i - 1, j);
+                    var col_right = kProvinceMap.GetPixel(i + 1, j);
+                    var col_low = kProvinceMap.GetPixel(i, j - 1);
+                    var col_high = kProvinceMap.GetPixel(i, j + 1);
+                    if(col_left != col) AddBorderPoint(col,col_left,i,j);
+                    if(col_right != col) AddBorderPoint(col,col_right,i,j);
+                    if(col_low != col) AddBorderPoint(col,col_low,i,j);
+                    if(col_high != col) AddBorderPoint(col,col_high,i,j);
+                } 
+                else if (i == 0)
+                {
+                    if (j == 0 || j == height - 1) ;
+                    else
+                    {
+                        var col_right = kProvinceMap.GetPixel(i + 1, j);
+                        var col_low = kProvinceMap.GetPixel(i, j - 1);
+                        var col_high = kProvinceMap.GetPixel(i, j + 1);
+                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
+                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
+                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
+                    }
+                }
+                else if (i == width - 1)
+                {
+                    if (j == 0 || j == height - 1) ;
+                    else
+                    {
+                        var col_left = kProvinceMap.GetPixel(i - 1, j);
+                        var col_low = kProvinceMap.GetPixel(i, j - 1);
+                        var col_high = kProvinceMap.GetPixel(i, j + 1);
+                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
+                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
+                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
+
+                    }
+                }
+                else if (j == 0)
+                {
+                    if (i == 0 || i == width - 1) ;
+                    else
+                    {
+                        var col_right = kProvinceMap.GetPixel(i + 1, j);
+                        var col_left = kProvinceMap.GetPixel(i-1, j );
+                        var col_high = kProvinceMap.GetPixel(i, j + 1);
+                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
+                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
+                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
+                    }
+                }
+                else if (j == height - 1)
+                {
+                    if (i == 0 || i == width - 1) ;
+                    else
+                    {
+                        var col_left = kProvinceMap.GetPixel(i - 1, j);
+                        var col_low = kProvinceMap.GetPixel(i, j - 1);
+                        var col_right = kProvinceMap.GetPixel(i + 1, j);
+                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
+                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
+                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
+                    }
+                }
+                
+            });
+
+        });
+        var dict = new Dictionary<BorderTeck,int>();
+
+        StreamWriter writer = new StreamWriter(Application.streamingAssetsPath
+         + "/province/border.txt");
+        StringBuilder builder = new StringBuilder();
+        foreach (var pair in borderPointMap)
+        {
+            var id = pair.Key;
+            var teck = new BorderTeck(id.provinceA,id.provinceB);
+            if (dict.ContainsKey(teck))
+                continue;
+            dict.Add(teck,1);
+            var pointList = pair.Value;
+
+            builder.Append(String.Format("{0}:", teck));
+            foreach (var point in pointList)
+            {
+                builder.Append(point);
+            }
+
+            builder.Append("\n\n");
+        }
+        writer.Write(builder.ToString());
+        writer.Close();
+    }
+
 }
