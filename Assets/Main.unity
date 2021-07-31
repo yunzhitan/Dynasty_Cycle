@@ -143,7 +143,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   kProvinceMap: {fileID: 2800000, guid: 2cf5754fc4fdfdd4a9716f7bb5529b18, type: 3}
   kProvinceColorMap: {fileID: 8400000, guid: e8aacdbcbb7051949a72cff49ba8082d, type: 2}
-  kProvinceCount: 3677
+  kProvinceCount: 3674
   kLut: {fileID: 2100000, guid: ee9d596507738684f943bb0056179b71, type: 2}
 --- !u!4 &290810788
 Transform:
@@ -376,8 +376,8 @@ Camera:
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
+  m_HDR: 0
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -414,7 +414,7 @@ MonoBehaviour:
   kUP: {x: 0, y: 1, z: 0}
   kTargetPos: {x: 2773.5, y: 600, z: 967.5}
   kLookAtPos: {x: 2773.5, y: 600, z: 967.5}
-  kModifyer: {x: 15, y: 40, z: 15}
+  kModifyer: {x: 15, y: 60, z: 15}
   ScrollWheelInput: 0
   ScrollWhellModify: 0
   Ho: 0
@@ -772,8 +772,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 64, y: 1, z: 64}
-  m_Center: {x: 32, y: 25.5, z: 32}
+  m_Size: {x: 256, y: 1, z: 256}
+  m_Center: {x: 128, y: 25.5, z: 128}
 --- !u!1 &1741692382
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,7 +853,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1791631212}
   - component: {fileID: 1791631211}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: RiverGrid
   m_TagString: Untagged
   m_Icon: {fileID: 0}

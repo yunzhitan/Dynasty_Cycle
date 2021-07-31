@@ -17,6 +17,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma enable_d3d11_debug_symbols
 			
 			#include "UnityCG.cginc"
 
@@ -70,10 +71,10 @@
 					return _TarColor;
 				}
 
-				return d;
+				//return d;
 				
 
-				return col;
+				//return col;
 			}
 			ENDCG
 		}

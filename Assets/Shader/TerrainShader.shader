@@ -57,6 +57,7 @@
 				float4 vertex : SV_POSITION;
 			};
 
+
 			float _A;
 
 			void calculate_index(float4 IDs, inout float4 IndexU, inout float4 IndexV, inout float vAllSame)

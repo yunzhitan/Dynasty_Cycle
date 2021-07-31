@@ -33,7 +33,7 @@ public class TerrainUnderWaterPrePass : MonoBehaviour
     {
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
         m_Cam.RenderWithShader(kTargetMaterial.shader, "TerrainTag");
     }

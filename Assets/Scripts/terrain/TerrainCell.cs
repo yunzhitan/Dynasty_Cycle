@@ -48,8 +48,8 @@ public class TerrainCell : MonoBehaviour {
 
         //vertice;
         //ConfigParam.PERBLOCKCOUNT cell //ConfigParam.PERBLOCKCOUNT + 1 vertices;
-        for(int i = 0; i < ConfigParam.PERBLOCKCOUNT + 1; i += 2)
-            for(int j = 0; j < ConfigParam.PERBLOCKCOUNT + 1; j += 2){
+        for(int i = 0; i < ConfigParam.PERBLOCKCOUNT + 1; i += 4)
+            for(int j = 0; j < ConfigParam.PERBLOCKCOUNT + 1; j += 4){
             float x = i * ConfigParam.PERBLOCKWORLDSIZE; // + xBase;
             float z = j * ConfigParam.PERBLOCKWORLDSIZE; //+ zBase;
 
@@ -74,15 +74,15 @@ public class TerrainCell : MonoBehaviour {
 
         //triangles;
 
-        for(int i = 0; i < ConfigParam.PERBLOCKCOUNT / 2; i++)
-            for(int j = 0; j < ConfigParam.PERBLOCKCOUNT / 2; j++){
+        for(int i = 0; i < ConfigParam.PERBLOCKCOUNT / 4; i++)
+            for(int j = 0; j < ConfigParam.PERBLOCKCOUNT / 4; j++){
             //PerCount = ConfigParam.PERBLOCKCOUNT + 1;
             //LeftTop = i * PerCount + j
             //RightTop = i * PerCount + j + i
             //LeftDown = ( i + 1 ) * PerCount + j;
             //RightDown = ( i + 1 ) * PerCount + j + 1;
 
-            int PerCount = (ConfigParam.PERBLOCKCOUNTEX + 2) / 2;
+            int PerCount = (ConfigParam.PERBLOCKCOUNTEX + 4) / 4;
             var LeftTop = i * PerCount + j;
             var RightTop = LeftTop + 1;
             var LeftDown = (i + 1) * PerCount + j;

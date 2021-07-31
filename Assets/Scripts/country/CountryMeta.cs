@@ -10,22 +10,45 @@ namespace country
         public String name { get; set; } //国家名称
         
         [JsonProperty("color")]
-        public Color32 color { get; set; } //国家颜色
+        public Color32 load_color { get; set; } //国家颜色
+        
+        [JsonIgnore]
+        public Color color { get; set; }
+        
+        [JsonProperty("tag")]
+        public String tag { get; set; } //国家代码
 
         public CountryMeta()
         {
+            tag = " ";
+        }
+
+        public void initColor()
+        {
+            var r = (float) load_color.r / 255f;
+            var g = (float) load_color.g / 255f;
+            var b = (float) load_color.b / 255f;
+            this.color = new Color(r, g, b);
 
         }
 
-        public CountryMeta(string name, Color32 color)
+        public CountryMeta(string name, Color32 loadColor, string tag)
         {
             this.name = name;
-            this.color = color;
+            this.load_color = loadColor;
+            this.tag = tag;
         }
-        
-        public override String ToString()
+
+        public CountryMeta(string name, Color32 loadColor)
         {
-            return name +" " + color.ToString();
+            this.name = name;
+            this.load_color = loadColor;
+            tag = " ";
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(name)}: {name}, {nameof(load_color)}: {load_color}, {nameof(tag)}: {tag}";
         }
     }
     

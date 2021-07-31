@@ -1,6 +1,24 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=01abf158_002D5d74_002D4f67_002Db00d_002D9fd2dd9787ea/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="BorderChange #6" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.BorderTest.BorderChange&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	
+	
+	
+	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=6d2a7a84_002D24da_002D4253_002Db274_002D6d1d7c00c6bb/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="BorderPairTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.BorderTest.BorderPairTest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.BorderTest.BorderChange&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.Test.WriteCountryToJson&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c6c107bf_002Dedd1_002D48de_002Da2cc_002D232d7a836256/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="WriteCountryToJson" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.Test.WriteCountryToJson&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::CF24D869-F8E7-69BD-5979-76375064DDF5::.NETFramework,Version=v4.7.1::editor.Test.WriteProvince&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	</wpf:ResourceDictionary>

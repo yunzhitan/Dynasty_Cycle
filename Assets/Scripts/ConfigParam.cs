@@ -1,10 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using country;
 using UnityEngine;
 
 public static class ConfigParam{
-
+    
     //每一个BLOCK 修正
     public static int UVModifyer = 1;
     //一个BLOCK 世界坐标下的大小
@@ -17,7 +18,7 @@ public static class ConfigParam{
     public static int BLOCKMAXHEIGHT = 2048;
 
     //每一个BLOCK 所占用的贴图的值
-    public static int PERBLOCKSIZE = 65;
+    public static int PERBLOCKSIZE = 257;
     
     //每个BLOCK块中面片数量
     public static int PERBLOCKCOUNT = (PERBLOCKSIZE-1);// 64 个方形

@@ -7,7 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using country;
+using Newtonsoft.Json;
 using province;
+using UnityEngine.UI;
 using Color = UnityEngine.Color;
 using Debug = UnityEngine.Debug;
 
@@ -21,76 +24,87 @@ public class ProvinceGrid : MonoBehaviour {
     public Material kLut;
 
     private Dictionary<Color, int> kProvinceColorToIDMap = new Dictionary<Color, int>();
-    private Dictionary<int, Color> kProvinceIdtoColorMap = new Dictionary<int, Color>();
-    private Dictionary<BorderPair,HashSet<Point>> borderPointMap = new Dictionary<BorderPair,HashSet<Point>>();
-    private Dictionary<int, List<Border>> borderMap = new Dictionary<int, List<Border>>();
+    private Dictionary<string, CountryMeta> kCountryMetaMap = new Dictionary<string, CountryMeta>();
 
     private ProvinceMeta[] kProvinceMeta;
 
     private Texture2D kProvincePolitimap;
 
-    public enum Type
-    {
-
-    }
-
-    private void OnEnable()
-    {
-        //searDefine();
-    }
 
     void Awake()
     {
-        search();
-        InitBorder();
+        InitCountries();
+        InitProvinces();
+        //search();
     }
-
-    private void InitBorder()
+    public void InitCountries()
     {
-        StreamReader reader = new StreamReader(Application.streamingAssetsPath
-                                               + "/province/border.txt");
-        while (reader.Peek() >= 0)
+        var dirPath = Application.streamingAssetsPath + "/temp/countries/";
+        var directoryInfo_ = new DirectoryInfo(dirPath);
+        foreach (var fileInfo in directoryInfo_.GetFiles())
         {
-            var s = reader.ReadLine().Split(new []{':'},StringSplitOptions.RemoveEmptyEntries);
-            if(s.Length == 0) continue;
-            var id_pair = s[0].Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
-            if (id_pair.Length == 0) continue;
-            var pa = Convert.ToInt32(id_pair[0]);
-            var pb = Convert.ToInt32(id_pair[1]);
-            BorderPair pair = new BorderPair(pa, pb);
-            Border border = new Border(pair,new List<Point>());
-            var point_str_list = s[1].Split(new char[]{' '},StringSplitOptions.RemoveEmptyEntries);
-            foreach (var point_str in point_str_list)
+            if (Path.GetExtension(fileInfo.Name) == ".meta") continue;
+            try
             {
-                var point_str_temp = point_str.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-                if(point_str_temp.Length == 0) continue;
-                var x = Convert.ToInt32(point_str_temp[0]);
-                var z = Convert.ToInt32(point_str_temp[1]);
-                var point = new Point(x, z);
-                border.pointList.Add(point);
+                StreamReader reader = new StreamReader(dirPath + fileInfo.Name);
+                var temp_name = fileInfo.Name.Replace(" - ", "-");
+                var ss = temp_name.Split(new char[] {'-'}, StringSplitOptions.RemoveEmptyEntries);
+                var tag = ss[0];
+                var context = reader.ReadToEnd();
+                var meta = JsonConvert.DeserializeObject<CountryMeta>(context);
+                meta.initColor();
+                kCountryMetaMap.Add(tag,meta);
             }
-
-            if (borderMap.ContainsKey(pa))
+            catch (JsonReaderException)
             {
-                borderMap[pa].Add(border);
-            }
-            else
-            {
-                var borderList = new List<Border>();
-                borderList.Add(border);
-                borderMap.Add(pa,borderList);
-            }
-            if (borderMap.ContainsKey(pb))
-            {
-                borderMap[pb].Add(border);
-            }
-            else
-            {
-                var borderList = new List<Border>();
-                borderList.Add(border);
-                borderMap.Add(pb,borderList);
+                Debug.Log("出问题的是"+fileInfo.Name);
             }
         }
+    }
+
+
+    private void InitProvinces()
+    {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        kProvinceMeta = new ProvinceMeta[ConfigParam.MAXProvinceCount];    
+        var dirPath = Application.streamingAssetsPath + "/temp/provinces/";
+        var directoryInfo_ = new DirectoryInfo(dirPath);
+        int count = 0;
+        foreach (var fileInfo in directoryInfo_.GetFiles())
+        {
+            if (Path.GetExtension(fileInfo.Name) == ".meta") continue;
+            count++;
+            try
+            {
+                StreamReader reader = new StreamReader(dirPath + fileInfo.Name);
+                var context = reader.ReadToEnd();
+                var meta = JsonConvert.DeserializeObject<ProvinceMeta>(context);
+                meta.InitColor();
+                reader.Close();
+                if (!kProvinceColorToIDMap.ContainsKey(meta.kMapColor))
+                {
+                    kProvinceColorToIDMap.Add(meta.kMapColor, meta.Id);
+                }
+
+                if (kCountryMetaMap.ContainsKey(meta.owner))
+                {
+                    meta.kShowColor = kCountryMetaMap[meta.owner].color;
+                    ChangeTargetProvinceColor(meta.kMapColor,meta.kShowColor);
+                }
+                kProvinceMeta[meta.Id] = meta;
+            }
+            catch (JsonReaderException)
+            {
+                Debug.Log("出问题的是"+fileInfo.Name);
+            }
+        }
+        kProvincePolitimap = new Texture2D(ConfigParam.BLOCKMAXWIDTH, ConfigParam.BLOCKMAXHEIGHT);
+        Graphics.ConvertTexture(kProvinceMap, kProvincePolitimap);
+        kProvinceCount = count;
+        //DebugProvinceCol();
+        stopwatch.Stop();
+        Debug.Log("INITPROVINCE所用时间为" + stopwatch.ElapsedMilliseconds);
     }
     
     private void search()
@@ -122,21 +136,19 @@ public class ProvinceGrid : MonoBehaviour {
             count++;
             s = reader.ReadLine();
             var id = Convert.ToInt32(s);
-            kProvinceIdtoColorMap.TryGetValue(id, out col);
+            /*
             kProvinceColorToIDMap.TryGetValue(col, out flag);
             Debug.Assert(flag == id);
             kProvinceMeta[id] = new ProvinceMeta(id,col);
+            */
         }
         
-        var ttt = kProvinceMap.GetPixel(0, 0);
-        Debug.Log("getPixel： " + ttt);
         
         fileStream.Close();
         kProvincePolitimap = new Texture2D(ConfigParam.BLOCKMAXWIDTH, ConfigParam.BLOCKMAXHEIGHT);
         Graphics.ConvertTexture(kProvinceMap, kProvincePolitimap);
         kProvinceCount = count;
         //DebugProvinceCol();
-        ChangeProvinceColor();
         stopwatch.Stop();
         
         Debug.Log("search函数的执行时间为：" + stopwatch.ElapsedMilliseconds);
@@ -160,9 +172,8 @@ public class ProvinceGrid : MonoBehaviour {
 
                 Color color = new Color(r, g, b, 1);
 
-                if (!kProvinceIdtoColorMap.ContainsKey(id))
+                if (!kProvinceColorToIDMap.ContainsKey(color))
                 {
-                    kProvinceIdtoColorMap.Add(id, color);
                     kProvinceColorToIDMap.Add(color, id);
                 }
             }
@@ -303,7 +314,7 @@ public class ProvinceGrid : MonoBehaviour {
         { 
             var id = GetProvinceID((int) pos.x, (int) pos.z);
             Debug.Log("选择到省份" + id);
-            
+            /*
             var Pdata = GetProvinceData(id);
             if (Pdata != null)
             {
@@ -311,7 +322,7 @@ public class ProvinceGrid : MonoBehaviour {
                 var tarcol = Color.white;
                 if (Pdata.kShowColor.a > 0.5)
                 {
-                    tarcol = Color.black;
+                    tarcol = Color.yellow;
                     tarcol.a = 0;
                 }
                 else
@@ -321,8 +332,9 @@ public class ProvinceGrid : MonoBehaviour {
                 }
                 Pdata.kShowColor = tarcol;
                 ChangeTargetProvinceColor(col, tarcol);
-
+                /*
                 var border_col = Color.blue;
+                border_col.a = 1;
                 List<Border> borders;
                 borderMap.TryGetValue(id, out borders);
                 foreach (var border in borders)
@@ -335,7 +347,9 @@ public class ProvinceGrid : MonoBehaviour {
                 kProvincePolitimap.Apply();
                 
                 Graphics.Blit(kProvincePolitimap, kProvinceColorMap);
-            }
+                }
+            */
+            
     }
 
 
@@ -435,127 +449,4 @@ public class ProvinceGrid : MonoBehaviour {
         return true;
     }
     
-    private void AddBorderPoint(Color ca, Color cb, int i, int j)
-    {
-        int pa = 0, pb = 0;
-        kProvinceColorToIDMap.TryGetValue(ca, out pa);
-        kProvinceColorToIDMap.TryGetValue(cb, out pb);
-        BorderPair pair = new BorderPair(pa, pb);
-
-        if (borderPointMap.ContainsKey(pair))
-        {
-            borderPointMap[pair].Add(new Point(i, j));
-        }
-        else
-        {
-            var pointSet = new HashSet<Point>();
-            pointSet.Add(new Point(i, j));
-            borderPointMap.Add(pair, pointSet);
-        }
-    }
-
-    void SearchBorder()
-    {
-        var width = kProvinceMap.width;
-        var height = kProvinceMap.height;
-        LC_Helper.Loop(width, (i) =>
-        {
-            LC_Helper.Loop(height, (j) =>
-            {
-                var col = kProvinceMap.GetPixel(i, j);
-                
-                if (i > 0 && i < width - 1 && j > 0 && j < height - 1)
-                {
-                    var col_left = kProvinceMap.GetPixel(i - 1, j);
-                    var col_right = kProvinceMap.GetPixel(i + 1, j);
-                    var col_low = kProvinceMap.GetPixel(i, j - 1);
-                    var col_high = kProvinceMap.GetPixel(i, j + 1);
-                    if(col_left != col) AddBorderPoint(col,col_left,i,j);
-                    if(col_right != col) AddBorderPoint(col,col_right,i,j);
-                    if(col_low != col) AddBorderPoint(col,col_low,i,j);
-                    if(col_high != col) AddBorderPoint(col,col_high,i,j);
-                } 
-                else if (i == 0)
-                {
-                    if (j == 0 || j == height - 1) ;
-                    else
-                    {
-                        var col_right = kProvinceMap.GetPixel(i + 1, j);
-                        var col_low = kProvinceMap.GetPixel(i, j - 1);
-                        var col_high = kProvinceMap.GetPixel(i, j + 1);
-                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
-                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
-                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
-                    }
-                }
-                else if (i == width - 1)
-                {
-                    if (j == 0 || j == height - 1) ;
-                    else
-                    {
-                        var col_left = kProvinceMap.GetPixel(i - 1, j);
-                        var col_low = kProvinceMap.GetPixel(i, j - 1);
-                        var col_high = kProvinceMap.GetPixel(i, j + 1);
-                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
-                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
-                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
-
-                    }
-                }
-                else if (j == 0)
-                {
-                    if (i == 0 || i == width - 1) ;
-                    else
-                    {
-                        var col_right = kProvinceMap.GetPixel(i + 1, j);
-                        var col_left = kProvinceMap.GetPixel(i-1, j );
-                        var col_high = kProvinceMap.GetPixel(i, j + 1);
-                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
-                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
-                        if (col_high != col) AddBorderPoint(col, col_high, i, j);
-                    }
-                }
-                else if (j == height - 1)
-                {
-                    if (i == 0 || i == width - 1) ;
-                    else
-                    {
-                        var col_left = kProvinceMap.GetPixel(i - 1, j);
-                        var col_low = kProvinceMap.GetPixel(i, j - 1);
-                        var col_right = kProvinceMap.GetPixel(i + 1, j);
-                        if (col_left != col) AddBorderPoint(col, col_left, i, j);
-                        if (col_low != col) AddBorderPoint(col, col_low, i, j);
-                        if (col_right != col) AddBorderPoint(col, col_right, i, j);
-                    }
-                }
-                
-            });
-
-        });
-        var dict = new Dictionary<BorderTeck,int>();
-
-        StreamWriter writer = new StreamWriter(Application.streamingAssetsPath
-         + "/province/border.txt");
-        StringBuilder builder = new StringBuilder();
-        foreach (var pair in borderPointMap)
-        {
-            var id = pair.Key;
-            var teck = new BorderTeck(id.provinceA,id.provinceB);
-            if (dict.ContainsKey(teck))
-                continue;
-            dict.Add(teck,1);
-            var pointList = pair.Value;
-
-            builder.Append(String.Format("{0}:", teck));
-            foreach (var point in pointList)
-            {
-                builder.Append(point);
-            }
-
-            builder.Append("\n\n");
-        }
-        writer.Write(builder.ToString());
-        writer.Close();
-    }
-
 }
