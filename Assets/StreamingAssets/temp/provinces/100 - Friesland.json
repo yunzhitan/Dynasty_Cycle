@@ -1,0 +1,11 @@
+{
+  "id": 100,
+  "owner": "FRI",
+  "name": "Friesland",
+  "color": {
+    "r": 14,
+    "g": 104,
+    "b": 0,
+    "a": 0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": 5,
+  "owner": "SWE",
+  "name": "Varmland",
+  "color": {
+    "r": 128,
+    "g": 42,
+    "b": 0,
+    "a": 0
+  }
+}

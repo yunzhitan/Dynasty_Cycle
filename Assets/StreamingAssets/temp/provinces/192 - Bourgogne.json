@@ -1,0 +1,11 @@
+{
+  "id": 192,
+  "owner": "BUR",
+  "name": "Bourgogne",
+  "color": {
+    "r": 27,
+    "g": 32,
+    "b": 128,
+    "a": 0
+  }
+}

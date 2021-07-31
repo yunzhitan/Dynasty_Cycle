@@ -1,0 +1,10 @@
+{
+  "name": "Synthetics",
+  "color": {
+    "r": 64,
+    "g": 64,
+    "b": 64,
+    "a": 0
+  },
+  "tag": "SYN"
+}

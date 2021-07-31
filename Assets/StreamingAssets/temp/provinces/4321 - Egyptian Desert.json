@@ -1,0 +1,11 @@
+{
+  "id": 4321,
+  "owner": "ter",
+  "name": "Egyptian Desert",
+  "color": {
+    "r": 121,
+    "g": 21,
+    "b": 154,
+    "a": 0
+  }
+}

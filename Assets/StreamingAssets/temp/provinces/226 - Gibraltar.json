@@ -1,0 +1,11 @@
+{
+  "id": 226,
+  "owner": "GRA",
+  "name": "Gibraltar",
+  "color": {
+    "r": 32,
+    "g": 100,
+    "b": 64,
+    "a": 0
+  }
+}

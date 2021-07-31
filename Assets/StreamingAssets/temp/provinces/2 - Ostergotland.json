@@ -1,0 +1,11 @@
+{
+  "id": 2,
+  "owner": "SWE",
+  "name": "Ostergotland",
+  "color": {
+    "r": 0,
+    "g": 36,
+    "b": 128,
+    "a": 0
+  }
+}

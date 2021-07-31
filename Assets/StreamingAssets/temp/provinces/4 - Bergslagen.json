@@ -1,0 +1,11 @@
+{
+  "id": 4,
+  "owner": "SWE",
+  "name": "Bergslagen",
+  "color": {
+    "r": 0,
+    "g": 40,
+    "b": 255,
+    "a": 0
+  }
+}

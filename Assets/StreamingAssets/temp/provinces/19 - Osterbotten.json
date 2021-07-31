@@ -1,0 +1,11 @@
+{
+  "id": 19,
+  "owner": "SWE",
+  "name": "Osterbotten",
+  "color": {
+    "r": 130,
+    "g": 70,
+    "b": 255,
+    "a": 0
+  }
+}

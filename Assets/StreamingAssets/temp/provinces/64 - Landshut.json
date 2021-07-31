@@ -1,0 +1,11 @@
+{
+  "id": 64,
+  "owner": "BAV",
+  "name": "Landshut",
+  "color": {
+    "r": 9,
+    "g": 32,
+    "b": 255,
+    "a": 0
+  }
+}
